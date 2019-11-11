@@ -26,6 +26,28 @@
     <Image Include="res\START.bmp">
       <Filter>res</Filter>
     </Image>
+    <Image Include="res\AdventureMode.bmp">
+      <Filter>res</Filter>
+    </Image>
+    <Image Include="res\VersusMode.bmp">
+      <Filter>res</Filter>
+    </Image>
+    <Image Include="res\Help.bmp">
+      <Filter>res</Filter>
+    </Image>
+    <Image Include="res\Defeat.bmp">
+      <Filter>res</Filter>
+    </Image>
+    <Image Include="res\Victory.bmp">
+      <Filter>res</Filter>
+    </Image>
+    <Image Include="res\Again.bmp">
+      <Filter>res</Filter>
+    </Image>
+    <Image Include="res\Next.bmp">
+      <Filter>res</Filter>
+    </Image>
+    <Image Include="res\bitmap1.bmp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="res">

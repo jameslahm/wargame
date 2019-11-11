@@ -1,4 +1,4 @@
-// WarGame.cpp : 定义应用程序的入口点。
+﻿// WarGame.cpp : 定义应用程序的入口点。
 //
 
 #include "WarGame.h"
@@ -6,8 +6,8 @@
 using namespace std;
 
 
-
-#pragma region 全局变量
+// 全局变量
+#pragma region 
 
 #define MAX_LOADSTRING			100		
 
@@ -17,13 +17,26 @@ WCHAR szTitle[MAX_LOADSTRING]; // 标题栏文本
 WCHAR szWindowClass[MAX_LOADSTRING]; // 主窗口类名
 
 
-
+// 背景图像资源
 HBITMAP bmp_Grass;			//背景图像资源
+
+HBITMAP bmp_Background;		//生成的背景图像
+
+HBITMAP bmp_Victory;        //战斗胜利图像
+HBITMAP bmp_Defeat;         //战斗失败图像
+
+// 按钮资源
 HBITMAP bmp_StartButton;	//开始按钮图像资源
+HBITMAP bmp_AdventureMode;  //冒险模式按钮图像资源
+HBITMAP bmp_VersusMode;     //对战模式按钮图像资源
+HBITMAP bmp_Help;			//帮助文档按钮图像资源
+HBITMAP bmp_Next;			//下一关按钮图像资源
+HBITMAP bmp_Again;			//重来按钮图像资源
+
 HBITMAP bmp_Unit_Red;		//红方主角图像资源
 HBITMAP bmp_Unit_Blue;		//蓝方主角图像资源
 
-HBITMAP bmp_Background;		//生成的背景图像
+
 
 
 
@@ -61,9 +74,8 @@ double const PI = acos(double(-1));
 
 #pragma endregion
 
-
-#pragma region Win32程序框架
-
+// Win32程序框架
+#pragma region 
 
 
 // 此代码模块中包含的函数的前向声明: 
@@ -226,22 +238,49 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 #pragma endregion
 
 
-#pragma region 事件处理函数
+// 事件处理函数
+#pragma region 
 
 // 初始化游戏窗体函数
 void InitGame(HWND hWnd, WPARAM wParam, LPARAM lParam) 
 {
 	//加载图像资源
 	bmp_Grass = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_BITMAP_GRASS));
-	bmp_StartButton = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_BITMAP_START));
+	bmp_Victory= LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_BITMAP_Victory));
+	bmp_Defeat = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_BITMAP_GRASS));
+	
 	bmp_Unit_Red = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_BITMAP_RED));
 	bmp_Unit_Blue = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_BITMAP_BLUE));
 
+	bmp_StartButton = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_BITMAP_START));
+	bmp_AdventureMode = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_BITMAP_AdventureMode));
+	bmp_VersusMode = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_BITMAP_VersusMode));
+	bmp_Help = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_BITMAP_Help));
+
+	bmp_Next = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_BITMAP_Next));
+	bmp_Again = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_BITMAP_Again));
+
 	//添加按钮
 
-	Button* startButton = CreateButton(BUTTON_STARTGAME, bmp_StartButton, BUTTON_STARTGAME_WIDTH, BUTTON_STARTGAME_HEIGHT, 
+	/* Button* startButton = CreateButton(BUTTON_STARTGAME, bmp_StartButton, BUTTON_STARTGAME_WIDTH, BUTTON_STARTGAME_HEIGHT, 
 		(WINDOW_WIDTH - BUTTON_STARTGAME_WIDTH)/2, (WINDOW_WIDTH - BUTTON_STARTGAME_HEIGHT) / 2);
-	buttons.push_back(startButton);
+	buttons.push_back(startButton);*/
+	Button* adventureModeButton = CreateButton(BUTTON_ADVENTUREMODE, bmp_AdventureMode, BUTTON_ADVENTUREMODE_WIDTH,
+		BUTTON_ADVENTUREMODE_HEIGHT, (WINDOW_WIDTH - BUTTON_ADVENTUREMODE_WIDTH) / 2, (WINDOW_HEIGHT - 2 * BUTTON_ADVENTUREMODE_HEIGHT) / 2);
+	Button* versusModeButton = CreateButton(BUTTON_VERSUSMODE, bmp_VersusMode, BUTTON_VERSUSMODE_WIDTH, BUTTON_VERSUSMODE_HEIGHT,
+		(WINDOW_WIDTH - BUTTON_VERSUSMODE_WIDTH) / 2, (WINDOW_HEIGHT + BUTTON_VERSUSMODE_HEIGHT) / 2);
+	Button* helpButton = CreateButton(BUTTON_HELP, bmp_Help, BUTTON_HELP_WIDTH, BUTTON_HELP_HEIGHT,
+		(WINDOW_WIDTH - BUTTON_HELP_WIDTH) / 2, (WINDOW_HEIGHT + 4*BUTTON_HELP_HEIGHT) / 2);
+	Button* nextButton = CreateButton(BUTTON_NEXT, bmp_Next, BUTTON_NEXT_WIDTH, BUTTON_NEXT_HEIGHT,
+		(WINDOW_WIDTH - BUTTON_NEXT_WIDTH) / 2, (WINDOW_HEIGHT + 3 * BUTTON_NEXT_HEIGHT) / 2);
+	Button* againButton=CreateButton(BUTTON_AGAIN,bmp_Again,BUTTON_AGAIN_WIDTH,BUTTON_AGAIN_HEIGHT,
+		(WINDOW_WIDTH - BUTTON_AGAIN_WIDTH) / 2, (WINDOW_HEIGHT + 3 * BUTTON_AGAIN_HEIGHT) / 2);
+
+	buttons.push_back(adventureModeButton);
+	buttons.push_back(versusModeButton);
+	buttons.push_back(helpButton);
+	buttons.push_back(nextButton);
+	buttons.push_back(againButton);
 
 	//初始化背景
 	bmp_Background = InitBackGround(hWnd, bmp_Grass);
@@ -324,10 +363,26 @@ void LButtonDown(HWND hWnd, WPARAM wParam, LPARAM lParam)
 				&& button->y + button->height >= mouseY)
 			{
 				switch (button->buttonID) {
-				case BUTTON_STARTGAME:
+				case BUTTON_ADVENTUREMODE:
 				{
 					//TODO：判断进入哪个关卡
 					InitStage(hWnd, STAGE_1);
+				}
+				case BUTTON_VERSUSMODE:
+				{
+					InitStage(hWnd, STAGE_VERSUS);
+				}
+				case BUTTON_HELP:
+				{
+					InitStage(hWnd, STAGE_HELP);
+				}
+				case BUTTON_NEXT:
+				{
+					InitStage(hWnd, currentStage->stageID + 1);
+				}
+				case BUTTON_AGAIN:
+				{
+					InitStage(hWnd, currentStage->stageID);
 				}
 				break;
 				}
@@ -358,8 +413,8 @@ void TimerUpdate(HWND hWnd, WPARAM wParam, LPARAM lParam)
 #pragma endregion
 
 
-#pragma region 其它游戏状态处理函数
-
+//其它游戏状态处理函数
+#pragma region 
 
 
 //TODO: 添加游戏需要的更多函数
@@ -431,7 +486,7 @@ void InitStage(HWND hWnd, int stageID)
 		for(int i=0;i<buttons.size();i++)
 		{
 			Button* button = buttons[i];
-			if (button->buttonID == BUTTON_STARTGAME) 
+			if (button->buttonID == BUTTON_ADVENTUREMODE || button->buttonID==BUTTON_VERSUSMODE || button->buttonID==BUTTON_HELP) 
 			{
 				button->visible = true;
 			}
@@ -512,8 +567,8 @@ void UpdateUnits(HWND hWnd)
 //单位行为函数
 void UnitBehaviour_1(Unit* unit){
 	
-	double dirX = mouseX - unit->x;
-	double dirY = mouseY - unit->y;
+	double dirX = double(mouseX) - unit->x;
+	double dirY = double(mouseY) - unit->y;
 	double dirLen = sqrt(dirX * dirX + dirY * dirY) + 0.0001;
 
 
@@ -592,8 +647,8 @@ void UnitBehaviour_1(Unit* unit){
 
 void UnitBehaviour_2(Unit* unit){
 	
-	double dirX = mouseX - unit->x;
-	double dirY = mouseY - unit->y;
+	double dirX = double(mouseX) - unit->x;
+	double dirY = double(mouseY) - unit->y;
 	double dirLen = sqrt(dirX * dirX + dirY * dirY) + 0.0001;
 
 
@@ -670,8 +725,8 @@ void UnitBehaviour_2(Unit* unit){
 
 #pragma endregion
 
-
-#pragma region 绘图函数
+// 绘图函数
+#pragma region 
 // 绘图函数
 void Paint(HWND hWnd)
 {

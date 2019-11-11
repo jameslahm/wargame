@@ -1,6 +1,7 @@
 #pragma once
 
-#pragma region 头文件引用
+//头文件引用
+#pragma region 
 
 // Windows 头文件: 
 #include <windows.h>
@@ -25,7 +26,8 @@
 #pragma endregion
 
 
-#pragma region 宏定义
+//宏定义
+#pragma region 
 
 #define WINDOW_TITLEBARHEIGHT	32			//标题栏高度
 #define WINDOW_WIDTH			1024		//游戏窗口宽度
@@ -34,6 +36,9 @@
 
 #define STAGE_STARTMENU			0		//开始画面的ID
 #define STAGE_1					1		//第一个游戏场景的ID
+#define STAGE_VERSUS            1000    //对战游戏场景
+#define STAGE_HELP              1001    //帮助场景
+
 
 
 #define UNIT_SIZE_X				64		//单位的宽度
@@ -71,11 +76,33 @@
 #define BG_CELL_WIDTH			64		//背景单格宽度
 #define BG_CELL_HEIGHT			64		//背景单格高度
 
-//其它定义
+//按钮
 #define BUTTON_STARTGAME			1001	//开始游戏按钮ID
 #define BUTTON_STARTGAME_WIDTH		212		//开始游戏按钮宽度
 #define BUTTON_STARTGAME_HEIGHT		76		//开始游戏按钮高度
 
+#define BUTTON_ADVENTUREMODE		1002    //冒险模式按钮ID
+#define BUTTON_ADVENTUREMODE_WIDTH   212    //冒险模式按钮宽度
+#define BUTTON_ADVENTUREMODE_HEIGHT   76    //冒险模式按钮高度
+
+#define BUTTON_VERSUSMODE           1003    //对战模式按钮ID
+#define BUTTON_VERSUSMODE_WIDTH      212    //对战模式按钮宽度
+#define BUTTON_VERSUSMODE_HEIGHT      76    //对战模式按钮高度
+
+#define	BUTTON_HELP                 1004    //帮助按钮ID
+#define BUTTON_HELP_WIDTH            212    //帮助按钮宽度
+#define BUTTON_HELP_HEIGHT            76    //帮助按钮高度
+
+#define BUTTON_NEXT                 1005    //下一关按钮ID
+#define BUTTON_NEXT_WIDTH             32    //下一关按钮宽度
+#define BUTTON_NEXT_HEIGHT            32    //下一关按钮高度
+
+#define BUTTON_AGAIN                1006    //重试按钮ID
+#define BUTTON_AGAIN_WIDTH            32    //重试按钮宽度
+#define	BUTTON_AGAIN_HEIGHT           32    //重试按钮高度
+
+
+//计时器
 #define TIMER_GAMETIMER				1		//游戏的默认计时器ID
 #define TIMER_GAMETIMER_ELAPSE		30		//默认计时器刷新间隔的毫秒数
 #define UNIT_SPEED					3.0		//单位行走速度	
@@ -142,8 +169,8 @@ struct Unit
 
 #pragma endregion
 
-
-#pragma region 事件处理函数声明
+//事件处理函数声明
+#pragma region 
 
 
 // 初始化游戏窗体函数
@@ -170,7 +197,8 @@ void TimerUpdate(HWND hWnd, WPARAM wParam, LPARAM lParam);
 #pragma endregion
 
 
-#pragma region 其它游戏状态处理函数声明
+//其它游戏状态处理函数声明
+#pragma region 
 
 // 添加按钮函数
 Button* CreateButton(int buttonID, HBITMAP img, int width, int height, int x, int y);
@@ -199,8 +227,8 @@ void UnitBehaviour_2(Unit* unit);
 
 #pragma endregion
 
-
-#pragma region 绘图函数声明
+//绘图函数声明
+#pragma region 
 
 // 绘图函数
 void Paint(HWND hWnd);
