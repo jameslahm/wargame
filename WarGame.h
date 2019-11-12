@@ -21,6 +21,10 @@
 // TODO:  在此处引用程序需要的其他头文件
 #include <vector>
 #include <math.h>
+#include<map>
+#include<tuple>
+// 调试配置
+#include <conio.h>
 
 
 #pragma endregion
@@ -36,8 +40,12 @@
 
 #define STAGE_STARTMENU			0		//开始画面的ID
 #define STAGE_1					1		//第一个游戏场景的ID
+#define STAGE_2                 2       //第二个游戏场景的ID
+#define STAGE_3                 3       //第三个游戏场景的ID
+#define STAGE_4                 4       //第四个游戏场景的ID
+#define STAGE_5                 5       //第五个游戏场景的ID
 #define STAGE_VERSUS            1000    //对战游戏场景
-#define STAGE_HELP              1001    //帮助场景
+#define STAGE_HELP              10000    //帮助场景
 
 
 
@@ -77,21 +85,25 @@
 #define BG_CELL_HEIGHT			64		//背景单格高度
 
 //按钮
-#define BUTTON_STARTGAME			1001	//开始游戏按钮ID
-#define BUTTON_STARTGAME_WIDTH		212		//开始游戏按钮宽度
-#define BUTTON_STARTGAME_HEIGHT		76		//开始游戏按钮高度
-
-#define BUTTON_ADVENTUREMODE		1002    //冒险模式按钮ID
+#define BUTTON_ADVENTUREMODE		1000    //冒险模式按钮ID
 #define BUTTON_ADVENTUREMODE_WIDTH   212    //冒险模式按钮宽度
 #define BUTTON_ADVENTUREMODE_HEIGHT   76    //冒险模式按钮高度
 
-#define BUTTON_VERSUSMODE           1003    //对战模式按钮ID
+#define BUTTON_VERSUSMODE           1001    //对战模式按钮ID
 #define BUTTON_VERSUSMODE_WIDTH      212    //对战模式按钮宽度
 #define BUTTON_VERSUSMODE_HEIGHT      76    //对战模式按钮高度
 
-#define	BUTTON_HELP                 1004    //帮助按钮ID
+#define	BUTTON_HELP                 1002    //帮助按钮ID
 #define BUTTON_HELP_WIDTH            212    //帮助按钮宽度
 #define BUTTON_HELP_HEIGHT            76    //帮助按钮高度
+
+#define BUTTON_STARTWAR		        1003	//开始游戏按钮ID
+#define BUTTON_STARTWAR_WIDTH	 	 159	//开始游戏按钮宽度
+#define BUTTON_STARTWAR_HEIGHT		  51	//开始游戏按钮高度
+
+#define BUTTON_EXIT                 1004    //退出游戏按钮
+#define BUTTON_EXIT_WIDTH            159    //退出游戏按钮宽度
+#define BUTTON_EXIT_HEIGHT            51    //退出游戏按钮高度
 
 #define BUTTON_NEXT                 1005    //下一关按钮ID
 #define BUTTON_NEXT_WIDTH             32    //下一关按钮宽度
@@ -100,6 +112,14 @@
 #define BUTTON_AGAIN                1006    //重试按钮ID
 #define BUTTON_AGAIN_WIDTH            32    //重试按钮宽度
 #define	BUTTON_AGAIN_HEIGHT           32    //重试按钮高度
+
+#define BUTTON_VICTORY              1007    //显示胜利图标
+#define BUTTON_VICTORY_WIDTH         212   
+#define BUTTON_VICTORY_HEIGHT         76    
+
+#define BUTTON_DEFEAT               1008    //显示失败图标
+#define BUTTON_DEFEAT_WIDTH          212    
+#define BUTTON_DEFEAT_HEIGHT          76
 
 
 //计时器
@@ -120,7 +140,7 @@ struct Stage
 	HBITMAP bg;			//背景图片
 	int timeCountDown;	//游戏时间倒计时
 	bool timerOn;		//计时器是否运行（游戏是否被暂停）
-
+	bool isWAR=FALSE;
 };
 
 
@@ -154,13 +174,24 @@ struct Unit
 	int state;		//单位状态
 	int direction;	//单位方向
 
-	int x;			//坐标x
-	int y;			//坐标y
+	double x;			//坐标x
+	double y;			//坐标y
 	double vx;		//速度x
 	double vy;		//速度y
-	int health;		//生命值
+	int health;     //血量
+	bool visible;   //血量为0时死亡，不显示
 };
 
+// 单位属性结构体
+struct Property
+{
+	int speed;      //速度
+	int health;     //生命值
+	int attack;     //攻击力
+	int defense;    //防御力
+	int attackArea;       //攻击范围
+	int cost;          //花费
+};
 
 
 
@@ -204,7 +235,7 @@ void TimerUpdate(HWND hWnd, WPARAM wParam, LPARAM lParam);
 Button* CreateButton(int buttonID, HBITMAP img, int width, int height, int x, int y);
 
 // 添加单位函数
-Unit* CreateUnit(int side, int type, int x, int y, int health);
+Unit* CreateUnit(int side, int type, int x, int y);
 
 
 
@@ -218,12 +249,20 @@ void UpdateUnits(HWND hWnd);
 
 
 //单位行为函数
-void UnitBehaviour_1(Unit* unit);
-void UnitBehaviour_2(Unit* unit);
+void UnitBehaviour_1(Unit* unit); //收割者行为
+void UnitBehaviour_2(Unit* unit); //魔术师行为
+void UnitBehaviour_3(Unit* unit); //剑士行为
+void UnitBehaviour_4(Unit* unit); //盾卫行为
+void UnitBehaviour_5(Unit* unit); //重装步兵行为
+void ChangeState(Unit* unit, int next_state,double dirX,double dirY,double dirLen); //改变单位状态
+std::tuple<double,double,double,Unit*> FindNearestEnemy(Unit* unit); //发现最近地方单位
+void ArrangeDeployUnits(); //根据模式改变部署单位位置
 
 
 //TODO: 添加游戏需要的更多函数
 
+// 按键控制函数
+void Pause();  //按下ESC键可使游戏暂停
 
 #pragma endregion
 

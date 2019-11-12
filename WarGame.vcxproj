@@ -166,9 +166,10 @@
   <ItemGroup>
     <Image Include="res\AdventureMode.bmp" />
     <Image Include="res\Again.bmp" />
-    <Image Include="res\bitmap1.bmp" />
     <Image Include="res\Blue.bmp" />
+    <Image Include="res\Caster.bmp" />
     <Image Include="res\Defeat.bmp" />
+    <Image Include="res\Exit.bmp" />
     <Image Include="res\Grass.bmp" />
     <Image Include="res\Help.bmp" />
     <Image Include="res\icon.ico" />
