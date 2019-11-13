@@ -172,12 +172,25 @@
     <Image Include="res\Exit.bmp" />
     <Image Include="res\Grass.bmp" />
     <Image Include="res\Help.bmp" />
+    <Image Include="res\Hoplite.bmp" />
     <Image Include="res\icon.ico" />
+    <Image Include="res\Lock.bmp" />
+    <Image Include="res\Money.bmp" />
     <Image Include="res\Next.bmp" />
+    <Image Include="res\Reaper.bmp" />
     <Image Include="res\Red.bmp" />
+    <Image Include="res\Saber.bmp" />
+    <Image Include="res\Shielder.bmp" />
     <Image Include="res\START.bmp" />
     <Image Include="res\VersusMode.bmp" />
     <Image Include="res\Victory.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Media Include="res\Background.wav" />
+    <Media Include="res\Caster.wav" />
+    <Media Include="res\Hoplite.wav" />
+    <Media Include="res\Reaper.wav" />
+    <Media Include="res\Shielder.wav" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -25,6 +25,18 @@ HBITMAP bmp_Background;		//生成的背景图像
 HBITMAP bmp_Victory;        //战斗胜利图像
 HBITMAP bmp_Defeat;         //战斗失败图像
 
+HBITMAP bmp_Money;          //金币图像
+
+HBITMAP bmp_Lock;           //锁图像
+#define LOCK_WIDTH      64
+#define LOCK_HEIGHT     65
+
+// 图标资源
+HBITMAP bmp_SkillReaper;        // 收割者技能-狂暴之心：24帧内大幅增加攻击力和移速，攻击力提升四倍，移速增加两倍，每120帧发动一次；
+HBITMAP bmp_SkillCaster;        // 魔术师技能-五雷轰顶，全屏技能，对所有敌方造成五倍雷电伤害，每120帧发动一次；
+HBITMAP bmp_SkillSaber;         // 剑士技能-刀光幻影：攻击状态下，发动秘技，造成五倍伤害；每120帧发动一次；
+HBITMAP bmp_SkillShielder;      // 盾兵技能-铜墙铁壁:增加一倍防御力，维持时间24帧，每120帧发动一次;
+HBITMAP bmp_SkillHoplite;       // 重装步兵技能-守御八方：当生命值小于200时自爆，造成五倍伤害;
 
 
 // 按钮资源
@@ -39,7 +51,6 @@ HBITMAP bmp_Again;			//重来按钮图像资源
 
 HBITMAP bmp_Unit_Red;		//红方主角图像资源
 HBITMAP bmp_Unit_Blue;		//蓝方主角图像资源
-
 
 Stage* currentStage = NULL; //当前场景状态
 vector<Unit*> units;		//战斗单位
@@ -67,20 +78,36 @@ int FRAMES_ATTACK_COUNT = 24;
 
 
 // TODO: 在此添加其它全局变量 
+
 map<int,Property*> PROPERTYMAP;        //全局单位属性表
 #define PM PROPERTYMAP
-int attack[5] = { 20,15,10,3,8 };      //攻击力
-int defense[5] = { 100,100,200,400,300 }; //防御力
-int health[5] = { 1000,1000,1500,3000,2000 }; //生命值
+int attack[5] = { 150,100,100,50,80 };      //攻击力
+int defense[5] = { 100,100,120,200,150 }; //防御力
+int health[5] = { 1500,1500,2000,4000,3000 }; //生命值
 int speed[5] = { 5,2,3,1,1 }; //速度值
-int attackArea[5] = { 50,250,50,50,50}; //攻击范围
+int attackArea[5] = { 64,250,64,64,64}; //攻击范围
 int cost[5] = { 200,150,100,50,50 }; //单位花费
+int skilliconwidth[5] = { 64,45,65,64,65 };
+int skilliconheight[5] = { 64,127,65,62,65 };
 
+//技能机制
+int frameLeft[5] = { 23,7,7,23,7 };                //技能剩余帧数
+int frameCD[5] = { 120,120,120,120,INT_MAX };    //技能CD
+int attackGain[5] = { 4, 5, 5, 1, 5 };           //攻击力增益
+int defenseGain[5] = { 1,1,1,2,1 };              //防御力增益
+int speedGain[5] = { 2,1,1,1,1 };                //速度增益
 
+//解锁机制
+bool isLock[5] = { 1,1,1,0,0 };
 
+int money[2] = { 0,0 };   //双方总金币数，蓝方、红方顺序
+bool isDeploying = FALSE; //是否正在部署单位
+
+CString name[5] = { _T("Reaper"),_T("Caster"),_T("Saber"),_T("Shielder"),_T("Hoplite") };
+
+vector<Icon*> icons;   //绘制图标
 
 double const PI = acos(double(-1));
-
 
 #pragma endregion
 
@@ -119,6 +146,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_WARGAME));
 
     MSG msg;
+
+	mciSendString(L"close bgm", 0, 0, 0);
+	mciSendString(L"open res\\Background.wav type MPEGVideo alias bgm", NULL, 0, NULL);
+	mciSendString(L"play bgm repeat", NULL, 0, NULL);
 
     // 主消息循环: 
     while (GetMessage(&msg, nullptr, 0, 0))
@@ -277,6 +308,20 @@ void InitGame(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	bmp_Victory= LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_BITMAP_Victory));
 	bmp_Defeat = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_BITMAP_Defeat));
 
+	//加载金币图像资源
+	bmp_Money= LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_BITMAP_Money));
+
+	//加载锁图像资源
+	bmp_Lock = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_BITMAP_Lock));
+
+	//加载技能图标资源
+	bmp_SkillReaper = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_BITMAP_SKILL_Reaper));
+	bmp_SkillCaster = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_BITMAP_SKILL_Caster));
+	bmp_SkillSaber = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_BITMAP_SKILL_Saber));
+	bmp_SkillShielder = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_BITMAP_SKILL_Shielder));
+	bmp_SkillHoplite = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_BITMAP_SKILL_Hoplite));
+	HBITMAP skillicon[5] = { bmp_SkillReaper,bmp_SkillCaster,bmp_SkillSaber,bmp_SkillShielder,bmp_SkillHoplite };
+
 	//初始化全局属性表
 	for (int i = 0; i < 5; i++) {
 		Property* p = new Property();
@@ -285,8 +330,27 @@ void InitGame(HWND hWnd, WPARAM wParam, LPARAM lParam)
 		p->defense = defense[i];
 		p->health = health[i];
 		p->speed = speed[i];
+		p->cost = cost[i];
+		p->isLock = isLock[i];
+		p->name = name[i];
+
+		//技能图标
+		p->skillicon = new SkillIcon();
+		p->skillicon->bmp = skillicon[i];
+		p->skillicon->width = skilliconwidth[i];
+		p->skillicon->height = skilliconheight[i];
+
+		//技能
+		p->skill = new Skill();
+		p->skill->attackGain = attackGain[i];
+		p->skill->defenseGain = defenseGain[i];
+		p->skill->frameCD = frameCD[i];		
+		p->skill->speedGain = speedGain[i];
+		p->skill->frameLeft = frameLeft[i];
+
 		PROPERTYMAP[i] = p;
 	}
+
 
 	//加载部署人物资源 
 	for (int i = 0; i < 10; i++) {
@@ -315,6 +379,11 @@ void InitGame(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	Button* defeatButton= CreateButton(BUTTON_DEFEAT, bmp_Defeat, BUTTON_DEFEAT_WIDTH, BUTTON_DEFEAT_HEIGHT,
 		(WINDOW_WIDTH - BUTTON_DEFEAT_WIDTH) / 2, (WINDOW_HEIGHT-BUTTON_DEFEAT_HEIGHT)/ 2);
 
+	Button* blueMoneyButton = CreateButton(BUTTON_BLUEMONEY, bmp_Money, BUTTON_BLUEMONEY_WIDTH, BUTTON_BLUEMONEY_HEIGHT,
+		BUTTON_BLUEMONEY_WIDTH / 2, BUTTON_BLUEMONEY_HEIGHT / 2);
+	Button* redMoneyButton = CreateButton(BUTTON_REDMONEY, bmp_Money, BUTTON_REDMONEY_WIDTH, BUTTON_REDMONEY_HEIGHT,
+		(WINDOW_WIDTH-4*BUTTON_REDMONEY_WIDTH / 2), BUTTON_REDMONEY_HEIGHT / 2);
+
 	buttons.push_back(adventureModeButton);
 	buttons.push_back(versusModeButton);
 	buttons.push_back(helpButton);
@@ -324,7 +393,8 @@ void InitGame(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	buttons.push_back(againButton);
 	buttons.push_back(victoryButton);
 	buttons.push_back(defeatButton);
-
+	buttons.push_back(blueMoneyButton);
+	buttons.push_back(redMoneyButton);
 
 	//初始化背景
 	bmp_Background = InitBackGround(hWnd, bmp_Grass);
@@ -455,10 +525,14 @@ void LButtonDown(HWND hWnd, WPARAM wParam, LPARAM lParam)
 						currentStage->timerOn = TRUE;
 						buttons[BUTTON_NEXT-1000]->visible = FALSE;
 						buttons[BUTTON_AGAIN-1000]->visible = FALSE;
+						return;
 					}
-					else {
-						InitStage(hWnd, currentStage->stageID + 1);
+
+					// 战斗失败后不可进入下一关
+					if (currentStage->isWAR == FALSE && buttons[BUTTON_DEFEAT-1000]->visible == TRUE) { 
+						return;
 					}
+					InitStage(hWnd, currentStage->stageID + 1);
 					break;
 				}
 				case BUTTON_AGAIN:
@@ -488,6 +562,7 @@ void LButtonDown(HWND hWnd, WPARAM wParam, LPARAM lParam)
 				controlUnit = new Unit();
 				(*controlUnit) = *deployUnits[i];
 				units.push_back(controlUnit);
+				isDeploying = TRUE;
 				return;
 			}
 			for (int i = 0; i < units.size(); i++) {
@@ -511,9 +586,11 @@ void LButtonDown(HWND hWnd, WPARAM wParam, LPARAM lParam)
 				&& mouseY> unit->y-UNIT_SIZE_Y/2
 				&& mouseY < unit->y + UNIT_SIZE_Y/2)
 			{
+				if (PM[unit->type]->isLock == TRUE)return;
 				controlUnit = new Unit();
 				(*controlUnit) = *deployUnits[i];
 				units.push_back(controlUnit);
+				isDeploying = TRUE;
 				return;
 			}
 		}
@@ -542,7 +619,18 @@ void LButtonUp(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	if (controlUnit != NULL) {
 		controlUnit->x = mouseX;
 		controlUnit->y = mouseY;
+		if (isDeploying == TRUE) {
+			if (money[10001 - controlUnit->side] < PM[controlUnit->type]->cost) {
+				MessageBox(hWnd, _T("Sorry,your money is not enough"), _T("Money!"), MB_OK);
+				delete controlUnit;
+				units.pop_back();
+			}
+			else {
+				money[10001 - controlUnit->side] -= PM[controlUnit->type]->cost;
+			}
+		}
 	}
+	isDeploying = FALSE;
 	controlUnit = NULL;
 }
 
@@ -610,9 +698,23 @@ Unit* CreateUnit(int side, int type, int x, int y)
 	unit->vy = 0;
 	unit->health = PROPERTYMAP[type]->health;
 	unit->visible = TRUE;
+	unit->skill = new Skill();
+	(*unit->skill) = (*PM[unit->type]->skill);
+	unit->skill->frameLeft = 0;    //为正数表示正在发动技能
+
 	return unit;
 }
 
+Icon* CreateIcon(HBITMAP bmp, int frameLeft,int x, int y, int width, int height) {
+	Icon* icon = new Icon();
+	icon->frameLeft = 4; //默认4帧
+	icon->x = x;
+	icon->y = y;
+	icon->width = width;
+	icon->height = height;
+	icon->bmp = bmp;
+	return icon;
+}
 
 
 // 初始化游戏场景函数
@@ -636,6 +738,12 @@ void InitStage(HWND hWnd, int stageID)
 		}
 		units.clear();
 
+		//清空技能图标
+		for (int i = 0; i < icons.size(); i++) {
+			delete icons[i];
+		}
+		icons.clear();
+
 		//显示开始界面的按钮
 		for(int i=0;i<buttons.size();i++)
 		{
@@ -648,6 +756,10 @@ void InitStage(HWND hWnd, int stageID)
 			{
 				button->visible = false;
 			}
+		}
+
+		for (int i = 0; i < 5;i++) {
+			PM[i]->isLock = isLock[i];
 		}
 
 
@@ -665,11 +777,17 @@ void InitStage(HWND hWnd, int stageID)
 		}
 		units.clear();
 
+		//清空技能图标
+		for (int i = 0; i < icons.size(); i++) {
+			delete icons[i];
+		}
+		icons.clear();
+
 		//显示游戏界面的按钮
 		for(int i=0;i<buttons.size();i++)
 		{
 			Button* button = buttons[i];
-			if (button->buttonID==BUTTON_STARTWAR || button->buttonID==BUTTON_EXIT) //TODO：加载游戏界面需要的按钮
+			if (button->buttonID==BUTTON_STARTWAR || button->buttonID==BUTTON_EXIT || button->buttonID==BUTTON_BLUEMONEY ) //TODO：加载游戏界面需要的按钮
 			{
 				button->visible = true;
 			}
@@ -685,46 +803,62 @@ void InitStage(HWND hWnd, int stageID)
 			case STAGE_1: 
 				// 场景一
 				// 一个盾卫，一个重装步兵
+				// 200金币
 			{
 				units.push_back(CreateUnit(UNIT_SIDE_RED, UNIT_TYPE_SHIELDER, 600, 200));
 				units.push_back(CreateUnit(UNIT_SIDE_RED, UNIT_TYPE_HOPLITE, 600, 300));
+				money[0] = 200;
 				break;
 			}
 			case STAGE_2:
 				// 场景二
 				// 两个盾卫，两个重装步兵
+				// 300金币
 			{
+				MessageBox(hWnd, _T("You have unlocked the Saber"), _T("Congratulations"), MB_OK);
+				PM[UNIT_TYPE_SABER]->isLock = 0;
 				units.push_back(CreateUnit(UNIT_SIDE_RED, UNIT_TYPE_SHIELDER, 600, 300));
 				units.push_back(CreateUnit(UNIT_SIDE_RED, UNIT_TYPE_SHIELDER, 500, 200));
 				units.push_back(CreateUnit(UNIT_SIDE_RED, UNIT_TYPE_HOPLITE, 700, 250));
 				units.push_back(CreateUnit(UNIT_SIDE_RED, UNIT_TYPE_HOPLITE, 700, 350));
+				money[0] = 300;
+				
 				break;
 			}
 			case STAGE_3:
 				// 场景三
 				// 一个盾卫，两个重装步兵，一个剑士
+				// 400金币
 			{
+				MessageBox(hWnd, _T("You have unlocked the Caster"), _T("Congratulations"), MB_OK);
+				PM[UNIT_TYPE_CASTER]->isLock = 0;
 				units.push_back(CreateUnit(UNIT_SIDE_RED, UNIT_TYPE_SHIELDER, 500, 300));
 				units.push_back(CreateUnit(UNIT_SIDE_RED, UNIT_TYPE_HOPLITE, 550, 400));
 				units.push_back(CreateUnit(UNIT_SIDE_RED, UNIT_TYPE_SABER, 650, 350));
 				units.push_back(CreateUnit(UNIT_SIDE_RED, UNIT_TYPE_HOPLITE, 550, 350));
+				money[0] = 400;
 				break;
 			}
 			case STAGE_4:
 				// 场景四
 				// 两个盾卫，一个重装步兵，两个剑士，一个魔术师
+				// 600金币
 			{
+				MessageBox(hWnd, _T("You have unlocked the Reaper"), _T("Congratulations"), MB_OK);
+				PM[UNIT_TYPE_REAPER]->isLock = 0;
 				units.push_back(CreateUnit(UNIT_SIDE_RED, UNIT_TYPE_SHIELDER, 500, 300));
 				units.push_back(CreateUnit(UNIT_SIDE_RED, UNIT_TYPE_SHIELDER, 550, 400));
 				units.push_back(CreateUnit(UNIT_SIDE_RED, UNIT_TYPE_SABER, 550, 450));
 				units.push_back(CreateUnit(UNIT_SIDE_RED, UNIT_TYPE_SABER, 650, 350));
 				units.push_back(CreateUnit(UNIT_SIDE_RED, UNIT_TYPE_HOPLITE, 550, 350));
 				units.push_back(CreateUnit(UNIT_SIDE_RED, UNIT_TYPE_CASTER, 700, 350));
+				money[0] = 600;
 				break;
 			}
 			case STAGE_5:
 				// 场景五
 				// 两个盾卫，两个重装步兵，两个剑士，两个魔术师，一个收割者
+				// 1200金币
 			{
 				units.push_back(CreateUnit(UNIT_SIDE_RED, UNIT_TYPE_SHIELDER, 500, 300));
 				units.push_back(CreateUnit(UNIT_SIDE_RED, UNIT_TYPE_SHIELDER, 550, 400));
@@ -735,6 +869,7 @@ void InitStage(HWND hWnd, int stageID)
 				units.push_back(CreateUnit(UNIT_SIDE_RED, UNIT_TYPE_CASTER, 700, 350));
 				units.push_back(CreateUnit(UNIT_SIDE_RED, UNIT_TYPE_CASTER, 700, 450));
 				units.push_back(CreateUnit(UNIT_SIDE_RED, UNIT_TYPE_REAPER, 600, 550));
+				money[0] = 1200;
 				break;
 			}
 			default:
@@ -747,6 +882,8 @@ void InitStage(HWND hWnd, int stageID)
 						units.push_back(CreateUnit(UNIT_SIDE_RED, i, rand() % 20 * 40+UNIT_SIZE_X, rand() % 20 * 30+UNIT_SIZE_Y));
 					}
 				}
+				money[0] = (rand() % 10 + 1) * 300;
+				money[1] = money[0];
 				break;
 			}
 		}
@@ -762,17 +899,25 @@ void InitStage(HWND hWnd, int stageID)
 		currentStage->timeCountDown = 10000;
 		currentStage->timerOn = true;
 
+
 		//清空单位
 		for (int i = 0; i < units.size(); i++) {
 			delete units[i];
 		}
 		units.clear();
 
+		//清空技能图标
+		for (int i = 0; i < icons.size(); i++) {
+			delete icons[i];
+		}
+		icons.clear();
+
 		//显示游戏界面的按钮
 		for (int i = 0; i < buttons.size(); i++)
 		{
 			Button* button = buttons[i];
-			if (button->buttonID == BUTTON_STARTWAR || button->buttonID==BUTTON_EXIT) //TODO：加载游戏界面需要的按钮
+			if (button->buttonID == BUTTON_STARTWAR || button->buttonID==BUTTON_EXIT || 
+				button->buttonID== BUTTON_BLUEMONEY || button->buttonID== BUTTON_REDMONEY) //TODO：加载游戏界面需要的按钮
 			{
 				button->visible = true;
 			}
@@ -781,6 +926,15 @@ void InitStage(HWND hWnd, int stageID)
 				button->visible = false;
 			}
 		}
+
+		//解锁全部单位
+		for (int i = 0; i < 5; i++) {
+			PM[i]->isLock = FALSE;
+		}
+
+		srand((unsigned int)time(NULL));
+		money[0] = (rand() % 10 + 1) * 300;
+		money[1] = money[0];
 		ArrangeDeployUnits();
 	}
 
@@ -813,31 +967,42 @@ void UpdateUnits(HWND hWnd)
 			redCount++;
 		}
 	}
-	if (redCount == 0) {
+	if (redCount == 0 || blueCount==0) {
 		for (int i = 0; i < units.size(); i++) {
 			delete units[i];
 		}
 		units.clear();
+		for (int i = 0; i < icons.size(); i++) {
+			delete icons[i];
+		}
+		icons.clear();
 		for (int i = 0; i < buttons.size(); i++) {
-			if (buttons[i]->buttonID == BUTTON_VICTORY || buttons[i]->buttonID == BUTTON_NEXT || buttons[i]->buttonID == BUTTON_AGAIN) buttons[i]->visible = TRUE;
+			if (buttons[i]->buttonID == BUTTON_NEXT || buttons[i]->buttonID == BUTTON_AGAIN 
+				|| buttons[i]->buttonID == BUTTON_EXIT || buttons[i]->buttonID==BUTTON_BLUEMONEY) buttons[i]->visible = TRUE;
 			else buttons[i]->visible = FALSE;
 		}
 		currentStage->isWAR = FALSE;
-		return;
-	}
-	if (blueCount == 0) {
-		for (int i = 0; i < units.size(); i++) {
-			delete units[i];
+		if (redCount == 0) {
+			buttons[BUTTON_VICTORY - 1000]->visible = TRUE;
 		}
-		units.clear();
-		for (int i = 0; i < buttons.size(); i++) {
-			if (buttons[i]->buttonID == BUTTON_DEFEAT || buttons[i]->buttonID == BUTTON_NEXT || buttons[i]->buttonID == BUTTON_AGAIN) buttons[i]->visible = TRUE;
-			else buttons[i]->visible = FALSE;
+		else {
+			buttons[BUTTON_DEFEAT - 1000]->visible = TRUE;
 		}
-		currentStage->isWAR = FALSE;
+		if (currentStage->stageID >= STAGE_VERSUS)buttons[BUTTON_REDMONEY-1000]->visible = TRUE;
 		return;
 	}
 
+	//判断Icons是否消失
+	for (auto iter = icons.begin(); iter != icons.end();) {
+		if ((*iter)->frameLeft == 1) {
+			(*iter)->frameLeft--;
+			iter=icons.erase(iter);
+		}
+		else {
+			(*iter)->frameLeft--;
+			iter++;
+		}
+	}
 
 	for(int i=0;i<units.size();i++){
 		Unit* unit = units[i];
@@ -884,31 +1049,7 @@ void UnitBehaviour_1(Unit* unit){
 	}
 
 	//判断当前状态, 以及判断是否需要状态变化
-	int next_state = unit->state;
-	switch(unit->state){
-		case UNIT_STATE_HOLD:
-			if(dirLen<PM[unit->type]->attackArea){
-				next_state = UNIT_STATE_ATTACK;
-			}
-			else {
-				next_state = UNIT_STATE_WALK;
-			}
-			break;
-		case UNIT_STATE_WALK:
-			if(dirLen <= PM[unit->type]->attackArea){
-				next_state = UNIT_STATE_ATTACK;
-			}
-			break;
-		case UNIT_STATE_ATTACK:
-			if(dirLen > PM[unit->type]->attackArea){
-				next_state = UNIT_STATE_WALK;
-			}
-			else {
-				enemy->health -= PM[unit->type]->attack;
-			}
-
-			break;
-	};
+	int next_state = JudgeState(unit, enemy, dirLen);
 	ChangeState(unit, next_state, dirX, dirY, dirLen);
 }
 
@@ -926,30 +1067,7 @@ void UnitBehaviour_2(Unit* unit) {
 	}
 
 	//判断当前状态, 以及判断是否需要状态变化
-	int next_state = unit->state;
-	switch (unit->state) {
-	case UNIT_STATE_HOLD:
-		if (dirLen < PM[unit->type]->attackArea) {
-			next_state = UNIT_STATE_ATTACK;
-		}
-		else {
-			next_state = UNIT_STATE_WALK;
-		}
-		break;
-	case UNIT_STATE_WALK:
-		if (dirLen <= PM[unit->type]->attackArea) {
-			next_state = UNIT_STATE_ATTACK;
-		}
-		break;
-	case UNIT_STATE_ATTACK:
-		if (dirLen > PM[unit->type]->attackArea) {
-			next_state = UNIT_STATE_WALK;
-		}
-		else {
-			enemy->health -= PM[unit->type]->attack;
-		}
-		break;
-	};
+	int next_state = JudgeState(unit, enemy, dirLen);
 	ChangeState(unit, next_state, dirX, dirY, dirLen);
 }
 
@@ -967,30 +1085,7 @@ void UnitBehaviour_3(Unit* unit) {
 	}
 
 	//判断当前状态, 以及判断是否需要状态变化
-	int next_state = unit->state;
-	switch (unit->state) {
-	case UNIT_STATE_HOLD:
-		if (dirLen < PM[unit->type]->attackArea) {
-			next_state = UNIT_STATE_ATTACK;
-		}
-		else {
-			next_state = UNIT_STATE_WALK;
-		}
-		break;
-	case UNIT_STATE_WALK:
-		if (dirLen <= PM[unit->type]->attackArea) {
-			next_state = UNIT_STATE_ATTACK;
-		}
-		break;
-	case UNIT_STATE_ATTACK:
-		if (dirLen > PM[unit->type]->attackArea) {
-			next_state = UNIT_STATE_WALK;
-		}
-		else {
-			enemy->health -= PM[unit->type]->attack;
-		}
-		break;
-	};
+	int next_state = JudgeState(unit, enemy, dirLen);
 	ChangeState(unit, next_state, dirX, dirY, dirLen);
 }
 
@@ -1008,30 +1103,7 @@ void UnitBehaviour_4(Unit* unit) {
 	}
 
 	//判断当前状态, 以及判断是否需要状态变化
-	int next_state = unit->state;
-	switch (unit->state) {
-	case UNIT_STATE_HOLD:
-		if (dirLen < PM[unit->type]->attackArea) {
-			next_state = UNIT_STATE_ATTACK;
-		}
-		else {
-			next_state = UNIT_STATE_WALK;
-		}
-		break;
-	case UNIT_STATE_WALK:
-		if (dirLen <= PM[unit->type]->attackArea) {
-			next_state = UNIT_STATE_ATTACK;
-		}
-		break;
-	case UNIT_STATE_ATTACK:
-		if (dirLen > PM[unit->type]->attackArea) {
-			next_state = UNIT_STATE_WALK;
-		}
-		else {
-			enemy->health -= PM[unit->type]->attack;
-		}
-		break;
-	};
+	int next_state = JudgeState(unit, enemy, dirLen);
 	ChangeState(unit, next_state, dirX, dirY, dirLen);
 }
 
@@ -1047,34 +1119,8 @@ void UnitBehaviour_5(Unit* unit){
 		unit->direction = UNIT_DIRECT_LEFT;
 	}
 
-	if(dirX>0){
-		unit->direction = UNIT_DIRECT_RIGHT;
-	}
-	else{
-		unit->direction = UNIT_DIRECT_LEFT;
-	}
-
-
 	//判断当前状态, 以及判断是否需要状态变化
-	int next_state = unit->state;
-	switch(unit->state){
-		case UNIT_STATE_HOLD:
-			next_state = UNIT_STATE_WALK;
-			break;
-		case UNIT_STATE_WALK:
-			if(dirLen < 32){
-				next_state = UNIT_STATE_ATTACK;
-			}else{
-				unit->vx = dirX / dirLen * PM[unit->type]->speed;
-				unit->vy = dirY / dirLen * PM[unit->type]->speed;
-			}
-			break;
-		case UNIT_STATE_ATTACK:
-			if(dirLen >= 32){
-				next_state = UNIT_STATE_WALK;
-			}
-			break;
-	};
+	int next_state = JudgeState(unit, enemy, dirLen);
 	ChangeState(unit, next_state, dirX, dirY, dirLen);
 }
 
@@ -1094,8 +1140,14 @@ void ChangeState(Unit* unit, int next_state,double dirX,double dirY,double dirLe
 		case UNIT_STATE_WALK:
 			unit->frame_sequence = FRAMES_WALK;
 			unit->frame_count = FRAMES_WALK_COUNT;
-			unit->vx = dirX / dirLen * PM[unit->type]->speed;
-			unit->vy = dirY / dirLen * PM[unit->type]->speed;
+			if (unit->skill->frameLeft > 0) {
+				unit->vx = dirX / dirLen * PM[unit->type]->speed*PM[unit->type]->skill->speedGain;
+				unit->vy = dirY / dirLen * PM[unit->type]->speed * PM[unit->type]->skill->speedGain;
+			}
+			else {
+				unit->vx = dirX / dirLen * PM[unit->type]->speed;
+				unit->vy = dirY / dirLen * PM[unit->type]->speed;
+			}
 			break;
 		case UNIT_STATE_ATTACK:
 			unit->frame_sequence = FRAMES_ATTACK;
@@ -1108,8 +1160,14 @@ void ChangeState(Unit* unit, int next_state,double dirX,double dirY,double dirLe
 	else {
 		switch (unit->state) {
 		case UNIT_STATE_WALK:
-			unit->vx = dirX / dirLen * PM[unit->type]->speed;
-			unit->vy = dirY / dirLen * PM[unit->type]->speed;
+			if (unit->skill->frameLeft > 0) {
+				unit->vx = dirX / dirLen * PM[unit->type]->speed * PM[unit->type]->skill->speedGain;
+				unit->vy = dirY / dirLen * PM[unit->type]->speed * PM[unit->type]->skill->speedGain;
+			}
+			else {
+				unit->vx = dirX / dirLen * PM[unit->type]->speed;
+				unit->vy = dirY / dirLen * PM[unit->type]->speed;
+			}
 			break;
 		}
 	}
@@ -1150,11 +1208,188 @@ void ArrangeDeployUnits() {
 	}
 	else {
 		for (int i = 0; i < deployUnits.size(); i++) {
-			deployUnits[i]->x = 4 * double(UNIT_SIZE_X)+ (double(WINDOW_WIDTH) - 10 * double(UNIT_SIZE_X)) / 2 + i * double(UNIT_SIZE_X);
+			deployUnits[i]->x = 3 * double(UNIT_SIZE_X)+ (double(WINDOW_WIDTH) - 10 * double(UNIT_SIZE_X)) / 2 + i * double(UNIT_SIZE_X);
 			if (deployUnits[i]->side == UNIT_SIDE_RED) deployUnits[i]->visible = FALSE;
 			else deployUnits[i]->visible = TRUE;
 		}
 	}
+}
+
+int JudgeState(Unit* unit,Unit* enemy,double dirLen) {
+	int next_state=unit->state;
+	switch (unit->state) {
+	case UNIT_STATE_HOLD:
+		if (dirLen < PM[unit->type]->attackArea) {
+			next_state = UNIT_STATE_ATTACK;
+		}
+		else {
+			next_state = UNIT_STATE_WALK;
+		}
+		break;
+	case UNIT_STATE_WALK:
+		if (dirLen <= PM[unit->type]->attackArea) {
+			next_state = UNIT_STATE_ATTACK;
+		}
+		break;
+	case UNIT_STATE_ATTACK:
+		if (dirLen > PM[unit->type]->attackArea) {
+			next_state = UNIT_STATE_WALK;
+		}
+		else {
+			JudgeAttack(unit, enemy);
+		}
+		break;
+	};
+	return next_state;
+}
+
+void JudgeAttack(Unit* unit, Unit* enemy) {
+
+	// 如果是盾兵需判断是否自爆
+	if (unit->type == UNIT_TYPE_HOPLITE) {
+		//自爆
+		if (unit->health <= 200) {
+			SkillIcon* skillicon = PM[UNIT_TYPE_HOPLITE]->skillicon;
+			Skill* skill = PM[UNIT_TYPE_HOPLITE]->skill;
+			Icon* icon;
+			if (unit->direction == UNIT_DIRECT_RIGHT) {
+				icon = CreateIcon(skillicon->bmp, skill->frameLeft, unit->x-UNIT_SIZE_X/4, unit->y, skillicon->width, skillicon->height);
+			}
+			else {
+				icon = CreateIcon(skillicon->bmp, skill->frameLeft, unit->x + UNIT_SIZE_X / 4, unit->y, skillicon->width, skillicon->height);
+			}
+			icons.push_back(icon);
+			unit->health = -1;
+			unit->skill->frameLeft = PM[unit->type]->skill->frameLeft;
+			unit->skill->frameCD = PM[unit->type]->skill->frameCD;
+			PlaySound(_T("./res/") + name[unit->type] + _T(".wav"), NULL, SND_FILENAME | SND_ASYNC);
+			Attack(unit, enemy);
+		}
+		else {
+			unit->skill->frameCD -= 1;
+			if (unit->skill->frameLeft >= 1) {
+				unit->skill->frameLeft -= 1;
+			}
+			Attack(unit, enemy);
+		}
+		return;
+	}
+
+	// 魔术师
+	if (unit->type == UNIT_TYPE_CASTER) {
+		if (unit->skill->frameCD <= 0) {
+			SkillIcon* skillicon = PM[UNIT_TYPE_CASTER]->skillicon;
+			Skill* skill = PM[UNIT_TYPE_CASTER]->skill;
+			unit->skill->frameLeft = 7;
+			for (int i = 0; i < units.size(); i++) {
+				Unit* u = units[i];
+				if (u->health > 0 && u->side != unit->side) {
+					Icon* icon;
+					if (u->direction == UNIT_DIRECT_RIGHT) {
+						icon = CreateIcon(skillicon->bmp, skill->frameLeft, u->x-UNIT_SIZE_X/4, u->y - (skillicon->height) / 2, skillicon->width, skillicon->height);
+					}
+					else {
+						icon = CreateIcon(skillicon->bmp, skill->frameLeft, u->x + UNIT_SIZE_X / 4, u->y - (skillicon->height) / 2, skillicon->width, skillicon->height);
+					}
+					icons.push_back(icon);
+					Attack(unit, u);
+				}
+			}
+			PlaySound(_T("./res/") + name[unit->type] + _T(".wav"), NULL, SND_FILENAME | SND_ASYNC);
+			unit->skill->frameCD = PM[unit->type]->skill->frameCD;
+		}
+		else {
+			unit->skill->frameCD -= 1;
+			if (unit->skill->frameLeft >= 1) {
+				unit->skill->frameLeft -= 1;
+			}
+			Attack(unit, enemy);
+		}
+		return;
+	}
+
+	//剑士
+	if (unit->type == UNIT_TYPE_SABER) {
+		if (unit->skill->frameCD <= 0) {
+			SkillIcon* skillicon = PM[UNIT_TYPE_SABER]->skillicon;
+			Skill* skill = PM[UNIT_TYPE_SABER]->skill;
+			Icon* icon;
+			if (enemy->direction == UNIT_DIRECT_RIGHT) {
+				icon = CreateIcon(skillicon->bmp, skill->frameLeft, enemy->x-UNIT_SIZE_X/4, enemy->y - UNIT_SIZE_Y/2, skillicon->width, skillicon->height);
+			}
+			else {
+				icon = CreateIcon(skillicon->bmp, skill->frameLeft, enemy->x + UNIT_SIZE_X / 4, enemy->y - UNIT_SIZE_Y/2, skillicon->width, skillicon->height);
+			}
+			icons.push_back(icon);
+			unit->skill->frameCD = PM[UNIT_TYPE_SABER]->skill->frameCD;
+			unit->skill->frameLeft = PM[UNIT_TYPE_SABER]->skill->frameLeft;
+			PlaySound(_T("./res/") + name[unit->type] + _T(".wav"), NULL, SND_FILENAME | SND_ASYNC);
+			Attack(unit, enemy);
+		}
+		else {
+			unit->skill->frameCD -= 1;
+			if (unit->skill->frameLeft >= 1) {
+				unit->skill->frameLeft -= 1;
+			}
+			Attack(unit, enemy);
+		}
+		return;
+	}
+
+	// 收割者、重装步兵
+	SkillIcon* skillicon = PM[unit->type]->skillicon;
+	Skill* skill = PM[unit->type]->skill;
+	if (unit->skill->frameCD <= 0) {
+		Icon* icon;
+		if (unit->direction == UNIT_DIRECT_RIGHT) {
+			icon = CreateIcon(skillicon->bmp, skill->frameLeft, unit->x-UNIT_SIZE_X/4, unit->y, skillicon->width, skillicon->height);
+		}
+		else {
+			icon = CreateIcon(skillicon->bmp, skill->frameLeft, unit->x + UNIT_SIZE_X / 4, unit->y, skillicon->width, skillicon->height);
+		}
+		icons.push_back(icon);
+		unit->skill->frameLeft = PM[unit->type]->skill->frameLeft;
+		unit->skill->frameCD = PM[unit->type]->skill->frameCD;
+		PlaySound(_T("./res/") + name[unit->type] + _T(".wav"), NULL, SND_FILENAME | SND_ASYNC);
+		Attack(unit, enemy);
+	}
+	else {
+		unit->skill->frameCD -= 1;
+		if (unit->skill->frameLeft >= 1) {
+			unit->skill->frameLeft -= 1;
+		}
+		Attack(unit, enemy);
+	}
+	
+	return;
+}
+
+void Attack(Unit* unit, Unit* enemy) {
+
+	Skill* skillu = PM[unit->type]->skill;
+	Skill* skille = PM[unit->type]->skill;
+
+	//发动技能瞬间可以攻击
+
+	if (unit->skill->frameLeft == PM[unit->type]->skill->frameLeft || (unit->frame_id % 24 == 23 && unit->skill->frameLeft>0)) {
+		if (enemy->skill->frameLeft > 0) {
+			enemy->health -= double(skillu->attackGain) * PM[unit->type]->attack / (double(skille->defenseGain) * PM[enemy->type]->defense / 100);
+		}
+		else {
+			enemy->health -= double(skillu->attackGain) * PM[unit->type]->attack / (double(PM[enemy->type]->defense) / 100);
+		}
+	}
+	else {
+		if (unit->frame_id % 24 == 23) {
+			if (enemy->skill->frameLeft > 0) {
+				enemy->health -= double( PM[unit->type]->attack) / (double(skille->defenseGain) * PM[enemy->type]->defense / 100);
+			}
+			else {
+				enemy->health -= double( PM[unit->type]->attack) / (double(PM[enemy->type]->defense) / 100);
+			}
+		}
+	}
+	return;
 }
 #pragma endregion
 
@@ -1169,6 +1404,7 @@ void Paint(HWND hWnd)
 
 	HDC hdc_memBuffer = CreateCompatibleDC(hdc_window);
 	HDC hdc_loadBmp = CreateCompatibleDC(hdc_window);
+	HPEN hPen = CreatePen(PS_SOLID, 2, RGB(233, 174, 17));
 
 	//初始化缓存
 	HBITMAP	blankBmp = CreateCompatibleBitmap(hdc_window, WINDOW_WIDTH, WINDOW_HEIGHT);
@@ -1186,6 +1422,18 @@ void Paint(HWND hWnd)
 	}
 	if ((currentStage->stageID >= STAGE_1 && currentStage->stageID < STAGE_HELP)) //TODO：添加多个游戏场景
 	{
+		//绘制图标
+		for (int i = 0; i < icons.size(); i++) {
+			Icon* icon = icons[i];
+			SelectObject(hdc_loadBmp, icon->bmp);
+			TransparentBlt(
+				hdc_memBuffer, icon->x - icon->width / 2, icon->y - icon->height / 2,
+				icon->width, icon->height,
+				hdc_loadBmp, 0, 0, icon->width, icon->height,
+				RGB(255, 255, 255)
+			);
+		}
+
 		// 绘制单位到缓存
 		for(int i=0;i<units.size();i++){
 			Unit* unit = units[i];
@@ -1199,20 +1447,76 @@ void Paint(HWND hWnd)
 				);
 			}
 		}
+
 		//绘制部署单位到缓存
 		for (int i = 0; i < deployUnits.size(); i++) {
 			Unit* unit = deployUnits[i];
 			if (unit->visible == TRUE) {
 				SelectObject(hdc_loadBmp, unit->img);
 				TransparentBlt(
-					hdc_memBuffer, unit->x - 0.5 * UNIT_SIZE_X, unit->y - 0.5 * UNIT_SIZE_Y,
+					hdc_memBuffer, unit->x -  UNIT_SIZE_X/2, unit->y -  UNIT_SIZE_Y/2,
 					UNIT_SIZE_X, UNIT_SIZE_Y,
 					hdc_loadBmp, UNIT_SIZE_X * unit->frame_column, UNIT_SIZE_Y * unit->frame_row, UNIT_SIZE_X, UNIT_SIZE_Y,
 					RGB(255, 255, 255)
 				);
+
+				SelectObject(hdc_memBuffer, hPen);
+				if (unit->direction == UNIT_DIRECT_RIGHT) {
+					TextOut(hdc_memBuffer, unit->x - 5 * UNIT_SIZE_X / 8, unit->y + UNIT_SIZE_Y / 2, PM[unit->type]->name, PM[unit->type]->name.GetLength());
+				}
+				else {
+					TextOut(hdc_memBuffer, unit->x - 1 *UNIT_SIZE_X / 4, unit->y + UNIT_SIZE_Y / 2, PM[unit->type]->name, PM[unit->type]->name.GetLength());
+				}
+
+				if (PM[unit->type]->isLock == TRUE) {
+					SelectObject(hdc_loadBmp,bmp_Lock);
+					TransparentBlt(
+						hdc_memBuffer, unit->x -  3*UNIT_SIZE_X/4, unit->y - 0.5 * UNIT_SIZE_Y,
+						UNIT_SIZE_X, UNIT_SIZE_Y,
+						hdc_loadBmp, 0, 0, UNIT_SIZE_X, UNIT_SIZE_Y,
+						RGB(255, 255, 255)
+					);
+				}
 			}
 		}	
-		
+
+		//输出金币钱数
+		SelectObject(hdc_memBuffer, hPen);
+		CString t;
+		t.Format(_T("%d"), money[0]);
+		TextOut(hdc_memBuffer, BUTTON_BLUEMONEY_WIDTH / 2 + BUTTON_BLUEMONEY_WIDTH, BUTTON_BLUEMONEY_HEIGHT / 2, t,t.GetLength());
+		if (currentStage->stageID >= STAGE_VERSUS) {
+			CString t;
+			t.Format(_T("%d"), money[1]);
+			TextOut(hdc_memBuffer, buttons[BUTTON_REDMONEY-1000]->x+BUTTON_REDMONEY_WIDTH, BUTTON_REDMONEY_HEIGHT / 2, t, t.GetLength());
+		}
+
+
+		// BUG
+		/*for (int i = 0; i < deployUnits.size(); i++) {
+			Unit* unit = deployUnits[i];
+			//绘制边框
+			if (unit->visible == TRUE) {
+				SelectObject(hdc_loadBmp, hPen);
+				Rectangle(hdc_loadBmp, 0, 0, UNIT_SIZE_X, UNIT_SIZE_Y);
+				if (unit->direction == UNIT_DIRECT_RIGHT) {
+					TransparentBlt(
+						hdc_memBuffer, unit->x - 3 * UNIT_SIZE_X / 4, unit->y - UNIT_SIZE_Y / 2,
+						UNIT_SIZE_X, UNIT_SIZE_Y,
+						hdc_loadBmp, 0, 0, UNIT_SIZE_X, UNIT_SIZE_Y,
+						RGB(255, 255, 255)
+					);
+				}
+				else {
+					TransparentBlt(
+						hdc_memBuffer, unit->x - 2 * UNIT_SIZE_X / 4, unit->y - UNIT_SIZE_Y / 2,
+						UNIT_SIZE_X, UNIT_SIZE_Y,
+						hdc_loadBmp, 0, 0, UNIT_SIZE_X, UNIT_SIZE_Y,
+						RGB(255, 255, 255)
+					);
+				}
+			}
+		}*/
 	}
 
 	// 绘制按钮到缓存
@@ -1231,7 +1535,6 @@ void Paint(HWND hWnd)
 		}
 	}
 	
-	
 	// 最后将所有的信息绘制到屏幕上
 	BitBlt(hdc_window, 0, 0, WINDOW_WIDTH, WINDOW_HEIGHT, hdc_memBuffer, 0, 0, SRCCOPY);
 
@@ -1239,6 +1542,7 @@ void Paint(HWND hWnd)
 	DeleteObject(blankBmp);
 	DeleteDC(hdc_memBuffer);
 	DeleteDC(hdc_loadBmp);
+	DeleteObject(hPen);
 
 	// 结束绘制
 	EndPaint(hWnd, &ps);

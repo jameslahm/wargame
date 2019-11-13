@@ -23,9 +23,10 @@
 #include <math.h>
 #include<map>
 #include<tuple>
-// 调试配置
-#include <conio.h>
-
+#include<string>
+#include<atlstr.h>
+#include <mmsystem.h>
+#pragma comment(lib, "WINMM.LIB")
 
 #pragma endregion
 
@@ -106,12 +107,12 @@
 #define BUTTON_EXIT_HEIGHT            51    //退出游戏按钮高度
 
 #define BUTTON_NEXT                 1005    //下一关按钮ID
-#define BUTTON_NEXT_WIDTH             32    //下一关按钮宽度
-#define BUTTON_NEXT_HEIGHT            32    //下一关按钮高度
+#define BUTTON_NEXT_WIDTH             90    //下一关按钮宽度
+#define BUTTON_NEXT_HEIGHT            39   //下一关按钮高度
 
 #define BUTTON_AGAIN                1006    //重试按钮ID
-#define BUTTON_AGAIN_WIDTH            32    //重试按钮宽度
-#define	BUTTON_AGAIN_HEIGHT           32    //重试按钮高度
+#define BUTTON_AGAIN_WIDTH            90    //重试按钮宽度
+#define	BUTTON_AGAIN_HEIGHT           39    //重试按钮高度
 
 #define BUTTON_VICTORY              1007    //显示胜利图标
 #define BUTTON_VICTORY_WIDTH         212   
@@ -121,6 +122,13 @@
 #define BUTTON_DEFEAT_WIDTH          212    
 #define BUTTON_DEFEAT_HEIGHT          76
 
+#define BUTTON_BLUEMONEY                1009    // 蓝方金币按钮
+#define BUTTON_BLUEMONEY_WIDTH            77    
+#define BUTTON_BLUEMONEY_HEIGHT           77
+
+#define BUTTON_REDMONEY                1010    // 红方金币按钮
+#define BUTTON_REDMONEY_WIDTH            77    
+#define BUTTON_REDMONEY_HEIGHT           77
 
 //计时器
 #define TIMER_GAMETIMER				1		//游戏的默认计时器ID
@@ -140,7 +148,7 @@ struct Stage
 	HBITMAP bg;			//背景图片
 	int timeCountDown;	//游戏时间倒计时
 	bool timerOn;		//计时器是否运行（游戏是否被暂停）
-	bool isWAR=FALSE;
+	bool isWAR=FALSE;   //是否正在自动战斗
 };
 
 
@@ -156,6 +164,23 @@ struct Button
 	int height;		//高度
 };
 
+// 技能结构体
+struct Skill
+{
+	int frameLeft;     //技能持续帧数
+	int frameCD;       //技能CD，小于等于零时发动技能
+	int attackGain;    //攻击力增益
+	int defenseGain;   //防御力增益
+	int speedGain;     //速度增益
+};
+
+struct SkillIcon
+{
+	HBITMAP bmp;
+	int width;
+	int height;
+};
+
 // 单位结构体
 struct Unit
 {
@@ -167,7 +192,7 @@ struct Unit
 	int* frame_sequence;		//当前的帧序列
 	int frame_count;		//帧序列的长度
 	int frame_id;			//当前显示的是帧序列的第几个
-	
+
 
 	int side;		//单位阵营
 	int type;		//单位类型
@@ -178,8 +203,9 @@ struct Unit
 	double y;			//坐标y
 	double vx;		//速度x
 	double vy;		//速度y
-	int health;     //血量
+	double health;     //血量
 	bool visible;   //血量为0时死亡，不显示
+	Skill* skill;   //单位技能
 };
 
 // 单位属性结构体
@@ -191,11 +217,22 @@ struct Property
 	int defense;    //防御力
 	int attackArea;       //攻击范围
 	int cost;          //花费
+	SkillIcon* skillicon;  //技能图标
+	Skill* skill; //技能
+	bool isLock;   //是否解锁
+	CString name; //角色名字
 };
 
-
-
-//TODO: 添加游戏需要的更多种数据（地物、砖块等）
+// 图标结构体 图片资源
+struct Icon
+{
+	int frameLeft;    //图标显示帧数 默认8帧
+	int x;            //图标中心点横坐标
+	int y;            //图标中心点纵坐标
+	int width; 
+	int height;
+	HBITMAP bmp;
+};
 
 
 #pragma endregion
@@ -237,6 +274,8 @@ Button* CreateButton(int buttonID, HBITMAP img, int width, int height, int x, in
 // 添加单位函数
 Unit* CreateUnit(int side, int type, int x, int y);
 
+// 添加图标函数
+Icon* CreateIcon(HBITMAP img,int frameLeft, int x, int y,int width,int height);
 
 
 
@@ -257,9 +296,9 @@ void UnitBehaviour_5(Unit* unit); //重装步兵行为
 void ChangeState(Unit* unit, int next_state,double dirX,double dirY,double dirLen); //改变单位状态
 std::tuple<double,double,double,Unit*> FindNearestEnemy(Unit* unit); //发现最近地方单位
 void ArrangeDeployUnits(); //根据模式改变部署单位位置
-
-
-//TODO: 添加游戏需要的更多函数
+int JudgeState(Unit* unit,Unit* enemy,double dirLen); //判断当前状态并更改
+void JudgeAttack(Unit* u, Unit* enemy);
+void Attack(Unit* u, Unit* enemy);
 
 // 按键控制函数
 void Pause();  //按下ESC键可使游戏暂停

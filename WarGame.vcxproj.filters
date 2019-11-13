@@ -47,8 +47,28 @@
     <Image Include="res\Next.bmp">
       <Filter>res</Filter>
     </Image>
-    <Image Include="res\Caster.bmp" />
     <Image Include="res\Exit.bmp">
+      <Filter>res</Filter>
+    </Image>
+    <Image Include="res\Money.bmp">
+      <Filter>res</Filter>
+    </Image>
+    <Image Include="res\Hoplite.bmp">
+      <Filter>res</Filter>
+    </Image>
+    <Image Include="res\Lock.bmp">
+      <Filter>res</Filter>
+    </Image>
+    <Image Include="res\Reaper.bmp">
+      <Filter>res</Filter>
+    </Image>
+    <Image Include="res\Saber.bmp">
+      <Filter>res</Filter>
+    </Image>
+    <Image Include="res\Shielder.bmp">
+      <Filter>res</Filter>
+    </Image>
+    <Image Include="res\Caster.bmp">
       <Filter>res</Filter>
     </Image>
   </ItemGroup>
@@ -56,5 +76,22 @@
     <Filter Include="res">
       <UniqueIdentifier>{97725428-4f33-461d-9532-4216434f7501}</UniqueIdentifier>
     </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Media Include="res\Background.wav">
+      <Filter>res</Filter>
+    </Media>
+    <Media Include="res\Caster.wav">
+      <Filter>res</Filter>
+    </Media>
+    <Media Include="res\Hoplite.wav">
+      <Filter>res</Filter>
+    </Media>
+    <Media Include="res\Reaper.wav">
+      <Filter>res</Filter>
+    </Media>
+    <Media Include="res\Shielder.wav">
+      <Filter>res</Filter>
+    </Media>
   </ItemGroup>
 </Project>
