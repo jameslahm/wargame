@@ -133,7 +133,6 @@
 //计时器
 #define TIMER_GAMETIMER				1		//游戏的默认计时器ID
 #define TIMER_GAMETIMER_ELAPSE		30		//默认计时器刷新间隔的毫秒数
-#define UNIT_SPEED					3.0		//单位行走速度	
 
 
 #pragma endregion
