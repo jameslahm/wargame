@@ -130,6 +130,10 @@
 #define BUTTON_REDMONEY_WIDTH            77    
 #define BUTTON_REDMONEY_HEIGHT           77
 
+#define BUTTON_TRASH                     1011
+#define BUTTON_TRASH_WIDTH                64
+#define BUTTON_TRASH_HEIGHT               64
+
 //计时器
 #define TIMER_GAMETIMER				1		//游戏的默认计时器ID
 #define TIMER_GAMETIMER_ELAPSE		30		//默认计时器刷新间隔的毫秒数

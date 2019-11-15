@@ -182,6 +182,7 @@
     <Image Include="res\Saber.bmp" />
     <Image Include="res\Shielder.bmp" />
     <Image Include="res\START.bmp" />
+    <Image Include="res\trash.bmp" />
     <Image Include="res\VersusMode.bmp" />
     <Image Include="res\Victory.bmp" />
   </ItemGroup>

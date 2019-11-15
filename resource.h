@@ -1,6 +1,6 @@
 //{{NO_DEPENDENCIES}}
-// Microsoft Visual C++ generated include file.
-// Used by WarGame.rc
+// Microsoft Visual C++ 生成的包含文件。
+// 供 WarGame.rc 使用
 //
 #define IDC_MYICON                      2
 #define IDD_WARGAME_DIALOG              102
@@ -29,13 +29,15 @@
 #define IDB_BITMAP1                     162
 #define IDB_BITMAP_SKILL_Hoplite        162
 #define IDB_BITMAP_Lock                 163
+#define IDB_BITMAP2                     167
+#define IDB_BITMAP_Trash                167
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1
-#define _APS_NEXT_RESOURCE_VALUE        167
+#define _APS_NEXT_RESOURCE_VALUE        168
 #define _APS_NEXT_COMMAND_VALUE         32771
 #define _APS_NEXT_CONTROL_VALUE         1000
 #define _APS_NEXT_SYMED_VALUE           110

@@ -27,6 +27,8 @@ HBITMAP bmp_Defeat;         //战斗失败图像
 
 HBITMAP bmp_Money;          //金币图像
 
+HBITMAP bmp_Trash;          //垃圾桶图像
+
 HBITMAP bmp_Lock;           //锁图像
 #define LOCK_WIDTH      64
 #define LOCK_HEIGHT     65
@@ -83,17 +85,17 @@ map<int,Property*> PROPERTYMAP;        //全局单位属性表
 #define PM PROPERTYMAP
 int attack[5] = { 150,100,100,50,80 };      //攻击力
 int defense[5] = { 100,100,120,200,150 }; //防御力
-int health[5] = { 1500,1500,2000,4000,3000 }; //生命值
+int health[5] = { 3000,2500,3500,4000,3700 }; //生命值
 int speed[5] = { 5,2,3,1,1 }; //速度值
-int attackArea[5] = { 64,250,64,64,64}; //攻击范围
+int attackArea[5] = { 50,150,50,50,50}; //攻击范围
 int cost[5] = { 200,150,100,100,50 }; //单位花费
 int skilliconwidth[5] = { 64,45,65,64,65 };
 int skilliconheight[5] = { 64,127,65,62,65 };
 
 //技能机制
 int frameLeft[5] = { 23,7,7,23,7 };                //技能剩余帧数
-int frameCD[5] = { 120,120,120,120,INT_MAX };    //技能CD
-int attackGain[5] = { 4, 5, 5, 1, 5 };           //攻击力增益
+int frameCD[5] = { 120,240,120,120,INT_MAX };    //技能CD
+int attackGain[5] = { 5, 3, 5, 1, 5 };           //攻击力增益
 int defenseGain[5] = { 1,1,1,2,1 };              //防御力增益
 int speedGain[5] = { 2,1,1,1,1 };                //速度增益
 
@@ -314,6 +316,9 @@ void InitGame(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	//加载锁图像资源
 	bmp_Lock = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_BITMAP_Lock));
 
+	//加载垃圾桶图像资源
+	bmp_Trash= LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_BITMAP_Trash));
+
 	//加载技能图标资源
 	bmp_SkillReaper = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_BITMAP_SKILL_Reaper));
 	bmp_SkillCaster = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_BITMAP_SKILL_Caster));
@@ -321,6 +326,7 @@ void InitGame(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	bmp_SkillShielder = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_BITMAP_SKILL_Shielder));
 	bmp_SkillHoplite = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_BITMAP_SKILL_Hoplite));
 	HBITMAP skillicon[5] = { bmp_SkillReaper,bmp_SkillCaster,bmp_SkillSaber,bmp_SkillShielder,bmp_SkillHoplite };
+
 
 	//初始化全局属性表
 	for (int i = 0; i < 5; i++) {
@@ -384,6 +390,9 @@ void InitGame(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	Button* redMoneyButton = CreateButton(BUTTON_REDMONEY, bmp_Money, BUTTON_REDMONEY_WIDTH, BUTTON_REDMONEY_HEIGHT,
 		(WINDOW_WIDTH-4*BUTTON_REDMONEY_WIDTH / 2), BUTTON_REDMONEY_HEIGHT / 2);
 
+	Button* trashButton= CreateButton(BUTTON_TRASH, bmp_Trash, BUTTON_TRASH_WIDTH, BUTTON_TRASH_HEIGHT,
+		BUTTON_TRASH_WIDTH/2, WINDOW_HEIGHT-3*BUTTON_TRASH_HEIGHT / 2);
+
 	buttons.push_back(adventureModeButton);
 	buttons.push_back(versusModeButton);
 	buttons.push_back(helpButton);
@@ -395,6 +404,7 @@ void InitGame(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	buttons.push_back(defeatButton);
 	buttons.push_back(blueMoneyButton);
 	buttons.push_back(redMoneyButton);
+	buttons.push_back(trashButton);
 
 	//初始化背景
 	bmp_Background = InitBackGround(hWnd, bmp_Grass);
@@ -624,10 +634,43 @@ void LButtonUp(HWND hWnd, WPARAM wParam, LPARAM lParam)
 				MessageBox(hWnd, _T("Sorry,your money is not enough"), _T("Money!"), MB_OK);
 				delete controlUnit;
 				units.pop_back();
+				controlUnit = NULL;
 			}
 			else {
 				money[10001 - controlUnit->side] -= PM[controlUnit->type]->cost;
 			}
+		}
+	}
+	if (controlUnit != NULL) {
+		if (mouseY < BG_ROWS_SKY * BG_CELL_HEIGHT + UNIT_SIZE_Y / 2) {
+			MessageBox(hWnd, _T("Sorry,you can't deploy unit on the sky"), _T("Warning!"), MB_OK);
+			if (controlUnit->side == UNIT_SIDE_BLUE) {
+				money[0] += PM[controlUnit->type]->cost;
+			}
+			else {
+				money[1] += PM[controlUnit->type]->cost;
+			}
+			delete controlUnit;
+			units.pop_back();
+			controlUnit = NULL;
+		}
+	}
+	Button* button = buttons[BUTTON_TRASH - 1000];
+	if (button->x <= mouseX
+		&& button->x + button->width >= mouseX
+		&& button->y <= mouseY
+		&& button->y + button->height >= mouseY) 
+	{
+		if (controlUnit!=NULL) {
+			if (controlUnit->side == UNIT_SIDE_BLUE) {
+				money[0] += PM[controlUnit->type]->cost;
+			}
+			else {
+				money[1]+= PM[controlUnit->type]->cost;
+			}
+			delete controlUnit;
+			units.pop_back();
+			controlUnit = NULL;
 		}
 	}
 	isDeploying = FALSE;
@@ -787,7 +830,7 @@ void InitStage(HWND hWnd, int stageID)
 		for(int i=0;i<buttons.size();i++)
 		{
 			Button* button = buttons[i];
-			if (button->buttonID==BUTTON_STARTWAR || button->buttonID==BUTTON_EXIT || button->buttonID==BUTTON_BLUEMONEY ) //TODO：加载游戏界面需要的按钮
+			if (button->buttonID==BUTTON_STARTWAR || button->buttonID==BUTTON_EXIT || button->buttonID==BUTTON_BLUEMONEY || button->buttonID==BUTTON_TRASH) //TODO：加载游戏界面需要的按钮
 			{
 				button->visible = true;
 			}
@@ -805,7 +848,7 @@ void InitStage(HWND hWnd, int stageID)
 				// 一个盾卫，一个重装步兵
 				// 200金币
 			{
-				units.push_back(CreateUnit(UNIT_SIDE_RED, UNIT_TYPE_SHIELDER, 600, 200));
+				units.push_back(CreateUnit(UNIT_SIDE_RED, UNIT_TYPE_SHIELDER, 600, 230));
 				units.push_back(CreateUnit(UNIT_SIDE_RED, UNIT_TYPE_HOPLITE, 600, 300));
 				money[0] = 200;
 				break;
@@ -818,7 +861,7 @@ void InitStage(HWND hWnd, int stageID)
 				MessageBox(hWnd, _T("You have unlocked the Saber"), _T("Congratulations"), MB_OK);
 				PM[UNIT_TYPE_SABER]->isLock = 0;
 				units.push_back(CreateUnit(UNIT_SIDE_RED, UNIT_TYPE_SHIELDER, 600, 300));
-				units.push_back(CreateUnit(UNIT_SIDE_RED, UNIT_TYPE_SHIELDER, 500, 200));
+				units.push_back(CreateUnit(UNIT_SIDE_RED, UNIT_TYPE_SHIELDER, 500, 230));
 				units.push_back(CreateUnit(UNIT_SIDE_RED, UNIT_TYPE_HOPLITE, 700, 250));
 				units.push_back(CreateUnit(UNIT_SIDE_RED, UNIT_TYPE_HOPLITE, 700, 350));
 				money[0] = 300;
@@ -879,7 +922,7 @@ void InitStage(HWND hWnd, int stageID)
 				for (int i = 0; i < 5; i++) {
 					nums[i] = rand() % 4;
 					for (int j = 0; j < nums[i]; j++) {
-						units.push_back(CreateUnit(UNIT_SIDE_RED, i, rand() % 20 * 40+UNIT_SIZE_X, rand() % 20 * 30+UNIT_SIZE_Y));
+						units.push_back(CreateUnit(UNIT_SIDE_RED, i, rand() % 20 * 40+UNIT_SIZE_X, rand() % 20 * 20+4*UNIT_SIZE_Y));
 					}
 				}
 				money[0] = (rand() % 10 + 1) * 300;
@@ -917,7 +960,7 @@ void InitStage(HWND hWnd, int stageID)
 		{
 			Button* button = buttons[i];
 			if (button->buttonID == BUTTON_STARTWAR || button->buttonID==BUTTON_EXIT || 
-				button->buttonID== BUTTON_BLUEMONEY || button->buttonID== BUTTON_REDMONEY) //TODO：加载游戏界面需要的按钮
+				button->buttonID== BUTTON_BLUEMONEY || button->buttonID== BUTTON_REDMONEY || button->buttonID == BUTTON_TRASH) //TODO：加载游戏界面需要的按钮
 			{
 				button->visible = true;
 			}
