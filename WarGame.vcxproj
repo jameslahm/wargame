@@ -37,6 +37,7 @@
     <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
+    <UseOfMfc>false</UseOfMfc>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -133,6 +134,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -172,6 +174,8 @@
     <Image Include="res\Exit.bmp" />
     <Image Include="res\Grass.bmp" />
     <Image Include="res\Help.bmp" />
+    <Image Include="res\help1.bmp" />
+    <Image Include="res\help2.bmp" />
     <Image Include="res\Hoplite.bmp" />
     <Image Include="res\icon.ico" />
     <Image Include="res\Lock.bmp" />

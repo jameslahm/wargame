@@ -74,6 +74,12 @@
     <Image Include="res\trash.bmp">
       <Filter>res</Filter>
     </Image>
+    <Image Include="res\help1.bmp">
+      <Filter>res</Filter>
+    </Image>
+    <Image Include="res\help2.bmp">
+      <Filter>res</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="res">

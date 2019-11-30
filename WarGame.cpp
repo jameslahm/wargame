@@ -33,6 +33,10 @@ HBITMAP bmp_Lock;           //锁图像
 #define LOCK_WIDTH      64
 #define LOCK_HEIGHT     65
 
+HBITMAP  bmp_Help1;      //帮助页面1图片
+HBITMAP bmp_Help2;       //帮助页面2图片
+
+
 // 图标资源
 HBITMAP bmp_SkillReaper;        // 收割者技能-狂暴之心：24帧内大幅增加攻击力和移速，攻击力提升四倍，移速增加两倍，每120帧发动一次；
 HBITMAP bmp_SkillCaster;        // 魔术师技能-五雷轰顶，全屏技能，对所有敌方造成五倍雷电伤害，每120帧发动一次；
@@ -88,7 +92,7 @@ int defense[5] = { 100,100,120,200,150 }; //防御力
 int health[5] = { 3000,2500,3500,4000,3700 }; //生命值
 int speed[5] = { 5,2,3,1,1 }; //速度值
 int attackArea[5] = { 50,150,50,50,50}; //攻击范围
-int cost[5] = { 200,150,100,100,50 }; //单位花费
+int cost[5] = { 200,150,100,80,50 }; //单位花费
 int skilliconwidth[5] = { 64,45,65,64,65 };
 int skilliconheight[5] = { 64,127,65,62,65 };
 
@@ -326,6 +330,9 @@ void InitGame(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	bmp_SkillShielder = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_BITMAP_SKILL_Shielder));
 	bmp_SkillHoplite = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_BITMAP_SKILL_Hoplite));
 	HBITMAP skillicon[5] = { bmp_SkillReaper,bmp_SkillCaster,bmp_SkillSaber,bmp_SkillShielder,bmp_SkillHoplite };
+
+	bmp_Help1 = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_BITMAP_HELP1));
+	bmp_Help2 = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_BITMAP_HELP2));
 
 
 	//初始化全局属性表
@@ -582,7 +589,12 @@ void LButtonDown(HWND hWnd, WPARAM wParam, LPARAM lParam)
 					&& mouseY> unit->y-UNIT_SIZE_Y/2
 					&& mouseY < unit->y + UNIT_SIZE_Y/2)
 				{
-					controlUnit = units[i];
+					Unit* unit = new Unit();
+					(*unit) = (*units[i]);
+					(*units[i]) = (*units[units.size() - 1]);
+					(*units[units.size() - 1]) = (*unit);
+					delete unit;
+					controlUnit = units[units.size() - 1];
 					return;
 				}
 			}
@@ -604,6 +616,7 @@ void LButtonDown(HWND hWnd, WPARAM wParam, LPARAM lParam)
 				return;
 			}
 		}
+
 		for (int i = 0; i < units.size(); i++) {
 			Unit* unit = units[i];
 			if (unit->side == UNIT_SIDE_BLUE) {
@@ -612,7 +625,12 @@ void LButtonDown(HWND hWnd, WPARAM wParam, LPARAM lParam)
 					&& mouseY> unit->y-UNIT_SIZE_Y/2
 					&& mouseY < unit->y + UNIT_SIZE_Y/2)
 				{
-					controlUnit = units[i];
+					Unit* unit = new Unit();
+					(*unit) = (*units[i]);
+					(*units[i]) = (*units[units.size() - 1]);
+					(*units[units.size() - 1]) = (*unit);
+					delete unit;
+					controlUnit = units[units.size() - 1];
 					return;
 				}
 			}
@@ -858,7 +876,7 @@ void InitStage(HWND hWnd, int stageID)
 				// 两个盾卫，两个重装步兵
 				// 300金币
 			{
-				MessageBox(hWnd, _T("You have unlocked the Saber"), _T("Congratulations"), MB_OK);
+				if(PM[UNIT_TYPE_SABER]->isLock) MessageBox(hWnd, _T("You have unlocked the Saber"), _T("Congratulations"), MB_OK);
 				PM[UNIT_TYPE_SABER]->isLock = 0;
 				units.push_back(CreateUnit(UNIT_SIDE_RED, UNIT_TYPE_SHIELDER, 600, 300));
 				units.push_back(CreateUnit(UNIT_SIDE_RED, UNIT_TYPE_SHIELDER, 500, 230));
@@ -873,7 +891,7 @@ void InitStage(HWND hWnd, int stageID)
 				// 一个盾卫，两个重装步兵，一个剑士
 				// 400金币
 			{
-				MessageBox(hWnd, _T("You have unlocked the Caster"), _T("Congratulations"), MB_OK);
+				if(PM[UNIT_TYPE_CASTER]->isLock)MessageBox(hWnd, _T("You have unlocked the Caster"), _T("Congratulations"), MB_OK);
 				PM[UNIT_TYPE_CASTER]->isLock = 0;
 				units.push_back(CreateUnit(UNIT_SIDE_RED, UNIT_TYPE_SHIELDER, 500, 300));
 				units.push_back(CreateUnit(UNIT_SIDE_RED, UNIT_TYPE_HOPLITE, 550, 400));
@@ -887,7 +905,7 @@ void InitStage(HWND hWnd, int stageID)
 				// 两个盾卫，一个重装步兵，两个剑士，一个魔术师
 				// 600金币
 			{
-				MessageBox(hWnd, _T("You have unlocked the Reaper"), _T("Congratulations"), MB_OK);
+				if(PM[UNIT_TYPE_REAPER]->isLock)MessageBox(hWnd, _T("You have unlocked the Reaper"), _T("Congratulations"), MB_OK);
 				PM[UNIT_TYPE_REAPER]->isLock = 0;
 				units.push_back(CreateUnit(UNIT_SIDE_RED, UNIT_TYPE_SHIELDER, 500, 300));
 				units.push_back(CreateUnit(UNIT_SIDE_RED, UNIT_TYPE_SHIELDER, 550, 400));
@@ -983,6 +1001,33 @@ void InitStage(HWND hWnd, int stageID)
 
 	if (stageID == STAGE_HELP) {
 		//帮助界面
+		currentStage->isWAR = FALSE;
+		currentStage->bg = bmp_Grass;
+		currentStage->timeCountDown = 10000;
+		currentStage->timerOn = true;
+		for (int i = 0; i < buttons.size(); i++)
+		{
+			Button* button = buttons[i];
+			if (button->buttonID == BUTTON_EXIT)
+			{
+				button->visible = true;
+			}
+			else
+			{
+				button->visible = false;
+			}
+		}
+		//清空单位
+		for (int i = 0; i < units.size(); i++) {
+			delete units[i];
+		}
+		units.clear();
+
+		//清空技能图标
+		for (int i = 0; i < icons.size(); i++) {
+			delete icons[i];
+		}
+		icons.clear();
 		return;
 	}
 	
@@ -1561,6 +1606,13 @@ void Paint(HWND hWnd)
 			}
 		}*/
 	}
+	if (currentStage->stageID == STAGE_HELP) {
+		SelectObject(hdc_loadBmp, bmp_Help1);
+		TransparentBlt(hdc_memBuffer, (WINDOW_WIDTH - IMG_HELP1_WIDTH) / 2, UNIT_SIZE_Y+12, IMG_HELP1_WIDTH, IMG_HELP1_HEIGHT, hdc_loadBmp, 0, 0, IMG_HELP1_WIDTH,IMG_HELP1_HEIGHT,RGB(0, 0, 0));
+		SelectObject(hdc_loadBmp, bmp_Help2);
+		TransparentBlt(hdc_memBuffer, (WINDOW_WIDTH - IMG_HELP2_WIDTH) / 2, IMG_HELP1_HEIGHT+UNIT_SIZE_Y+12, IMG_HELP2_WIDTH, IMG_HELP2_HEIGHT, hdc_loadBmp, 0, 0, IMG_HELP2_WIDTH,IMG_HELP2_HEIGHT,RGB(0, 0, 0));
+	}
+
 
 	// 绘制按钮到缓存
 	for(int i=0;i<buttons.size();i++)

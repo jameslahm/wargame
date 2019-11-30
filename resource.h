@@ -29,15 +29,18 @@
 #define IDB_BITMAP1                     162
 #define IDB_BITMAP_SKILL_Hoplite        162
 #define IDB_BITMAP_Lock                 163
-#define IDB_BITMAP2                     167
 #define IDB_BITMAP_Trash                167
+#define IDB_PNG1                        169
+#define IDB_BITMAP_HELP1                171
+#define IDB_BITMAP3                     172
+#define IDB_BITMAP_HELP2                172
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1
-#define _APS_NEXT_RESOURCE_VALUE        168
+#define _APS_NEXT_RESOURCE_VALUE        173
 #define _APS_NEXT_COMMAND_VALUE         32771
 #define _APS_NEXT_CONTROL_VALUE         1000
 #define _APS_NEXT_SYMED_VALUE           110

@@ -38,6 +38,12 @@
 #define WINDOW_WIDTH			1024		//游戏窗口宽度
 #define WINDOW_HEIGHT			768			//游戏窗口高度
 
+#define IMG_HELP1_WIDTH        708     //帮助页面1宽度
+#define IMG_HELP1_HEIGHT       191      //帮助页面1高度
+
+#define IMG_HELP2_WIDTH        708      //帮助页面2宽度
+#define IMG_HELP2_HEIGHT       488      //帮助页面2高度
+
 
 #define STAGE_STARTMENU			0		//开始画面的ID
 #define STAGE_1					1		//第一个游戏场景的ID
